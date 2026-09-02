@@ -1,3 +1,4 @@
+import streamlit as st
 from groq import Groq
 from dotenv import load_dotenv
 import os
@@ -6,45 +7,68 @@ load_dotenv()
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-topic = input("Enter your Topic:")
-tone = input("Enter Tone (e.g., professional, casual, humorous):")
-length = input("Enter length in words:")
+st.title("AI Writing Assistant")
+st.write("Generate content using AI with your preferred tone and length.")
 
-prompt = f"""
+
+
+# User inputs
+topic = st.text_input("Enter your topic")
+
+tone = st.selectbox(
+    "Choose a tone",
+    ["Professional", "Casual", "Humorous"]
+)
+
+length = st.slider(
+    "Choose length (words)",
+    min_value=50,
+    max_value=1000,
+    value=250,
+    step=50
+)
+
+# Generate button
+if st.button("Generate Content"):
+
+    if not topic:
+        st.warning("Please enter a topic.")
+    else:
+        prompt = f"""
 You are a professional AI writing assistant.
 
-TASK:
-Write an article about the following topic:
+Write an article about:
 {topic}
 
-TONE:
-Use a {tone} tone.
+Tone: {tone}
 
-LENGTH:
-Write approximately {length} words.
+Length: approximately {length} words.
 
-REQUIREMENTS:
+Requirements:
 - Stay focused on the topic.
 - Use clear and natural language.
 - Match the requested tone.
 - Avoid unnecessary repetition.
-- Make the content informative and engaging.
-
-OUTPUT FORMAT:
 - Give the article a suitable title.
-- Use short paragraphs.
-- Do not include explanations about how you generated the content.
 - Output only the final article.
 """
 
-response = client.chat.completions.create(
-    model="openai/gpt-oss-120b",
-    messages=[
-        {"role": "user", "content": prompt}
-    ]
-)
+        response = client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
 
-print(response.choices[0].message.content)
+        result = response.choices[0].message.content
 
+        st.subheader("Generated Content")
+        st.write(result)
 
-
+         # Download button
+        st.download_button(
+            label="⬇️ Download Content",
+            data=result,
+            file_name="generated_content.txt",
+            mime="text/plain"
+        )
